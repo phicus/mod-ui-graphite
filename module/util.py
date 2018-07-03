@@ -135,6 +135,13 @@ class GraphFactory(object):
         else:
             return GraphiteMetric.normalize_name(self.cfg.hostcheck)
 
+    @property
+    def tags(self):
+        if self.element_type == 'service':
+            return self.element.host.cpe_registration_tags.split(',') or ['dummy_tag']
+        else:
+            return self.element.cpe_registration_tags.split(',') or ['dummy_tag']
+
     # retrieve a style with graceful fallback
     def get_style(self, name):
         try:
@@ -262,11 +269,16 @@ class GraphFactory(object):
 
 
         # Split, we may have several images.
-        for img in html.substitute(context).split('\n'):
-            if not img:
-                continue
-            graph = GraphiteURL.parse(img, style=self.style)
-            uris.append(dict(link=graph.url('composer'), img_src=graph.url('render')))
+        logger.info("[ui-graphite] tags elt={}...".format(self.hostname))
+        for tag in self.tags:
+            logger.info("[ui-graphite] tag={}".format(tag))
+            context['tag'] = tag
+
+            for img in html.substitute(context).split('\n'):
+                if not img:
+                    continue
+                graph = GraphiteURL.parse(img, style=self.style)
+                uris.append(dict(link=graph.url('composer'), img_src=graph.url('render')))
         return uris
 
 
