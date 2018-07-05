@@ -270,18 +270,27 @@ class GraphFactory(object):
 
         # Split, we may have several images.
         logger.debug("[ui-graphite] tags elt={}...".format(self.hostname))
-        for tag in self.tags:
-            logger.debug("[ui-graphite] tag={}".format(tag))
-            context['tag'] = tag
+        # Dirty hack for untagged templates
+        if '{tag}' in template_html:
+            for tag in self.tags:
+                logger.debug("[ui-graphite] tag={}".format(tag))
+                context['tag'] = tag
+                uris += self._get_uris_from_string_template(html, context, graph_start, graph_end)
+        else:
+            uris += self._get_uris_from_string_template(html, context, graph_start, graph_end)
 
-            for img in html.substitute(context).split('\n'):
-                if not img:
-                    continue
-                # FIXME Temporal fix for no time interval in uri
-                # https://github.com/shinken-monitoring/mod-ui-graphite/issues/16
-                img = img + "&from=" + graph_start + "&until=" + graph_end
-                graph = GraphiteURL.parse(img, style=self.style)
-                uris.append(dict(link=graph.url('composer'), img_src=graph.url('render')))
+        return uris
+
+    def _get_uris_from_string_template(self, template, context, graph_start, graph_end):
+        uris = []
+        for img in template.substitute(context).split('\n'):
+            if not img:
+                continue
+            # FIXME Temporal fix for no time interval in uri
+            # https://github.com/shinken-monitoring/mod-ui-graphite/issues/16
+            img = img + "&from=" + graph_start + "&until=" + graph_end
+            graph = GraphiteURL.parse(img, style=self.style)
+            uris.append(dict(link=graph.url('composer'), img_src=graph.url('render')))
         return uris
 
 
