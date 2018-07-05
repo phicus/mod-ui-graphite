@@ -277,6 +277,9 @@ class GraphFactory(object):
             for img in html.substitute(context).split('\n'):
                 if not img:
                     continue
+                # FIXME Temporal fix for no time interval in uri
+                # https://github.com/shinken-monitoring/mod-ui-graphite/issues/16
+                img = img + "&from=" + graph_start + "&until=" + graph_end
                 graph = GraphiteURL.parse(img, style=self.style)
                 uris.append(dict(link=graph.url('composer'), img_src=graph.url('render')))
         return uris
