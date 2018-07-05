@@ -269,9 +269,9 @@ class GraphFactory(object):
 
 
         # Split, we may have several images.
-        logger.info("[ui-graphite] tags elt={}...".format(self.hostname))
+        logger.debug("[ui-graphite] tags elt={}...".format(self.hostname))
         for tag in self.tags:
-            logger.info("[ui-graphite] tag={}".format(tag))
+            logger.debug("[ui-graphite] tag={}".format(tag))
             context['tag'] = tag
 
             for img in html.substitute(context).split('\n'):
