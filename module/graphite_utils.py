@@ -135,6 +135,10 @@ class GraphiteTarget(object):
 
         def parse_graphite_part(part):
             logging.debug('Parsing %s', part)
+
+            if part[0:2] == '__' and part[-2:] == '__':
+                return part[2:-2]
+
             ndx = part.find('(')
             if ndx < 0:
                 logging.debug('No function call')
