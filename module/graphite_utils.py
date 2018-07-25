@@ -27,6 +27,7 @@ from datetime import datetime
 import re
 import logging
 import urlparse
+import copy
 
 
 # encapsulate graph styles
@@ -178,7 +179,7 @@ class GraphiteURL(object):
         if targets is not None:
             for t in targets:
                 self.add_target(t)
-        self.style = style
+        self.style = copy.copy(style)
         for k in ('height', 'width', 'font_size', 'line_style'):
             if k in kwargs:
                 setattr(self.style, k, kwargs[k])
