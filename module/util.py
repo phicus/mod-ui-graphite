@@ -25,6 +25,7 @@ import logging
 import os
 from string import Template
 import json
+import re
 
 from .graphite_utils import GraphiteURL, GraphiteMetric, graphite_time
 
@@ -138,9 +139,16 @@ class GraphFactory(object):
     @property
     def tags(self):
         if self.element_type == 'service':
-            return self.element.host.cpe_registration_tags.split(',') or ['dummy_tag']
+            string_tags = self.element.host.cpe_registration_tags or ''
         else:
-            return self.element.cpe_registration_tags.split(',') or ['dummy_tag']
+            string_tags = self.element.cpe_registration_tags or ''
+
+        regex = re.compile(r"(?P<tag>[a-zA-Z0-9/\.]+):'''(?P<taglabel>[a-zA-Z0-9 \-_]*)'''($|\s)")
+        logger.debug("tags...string_tags -> [[%s]]", string_tags)
+        for match in regex.finditer(string_tags):
+            logger.debug(" - tags... %s->%s", match.group('tag'), match.group('taglabel'))
+
+        return {match.group('tag'):match.group('taglabel') for match in regex.finditer(string_tags)}
 
     # retrieve a style with graceful fallback
     def get_style(self, name):
@@ -275,6 +283,7 @@ class GraphFactory(object):
             for tag in self.tags:
                 logger.debug("[ui-graphite] tag={}".format(tag))
                 context['tag'] = tag
+                context['taglabel'] = self.tags[tag]
                 uris += self._get_uris_from_string_template(html, context, graph_start, graph_end)
         else:
             uris += self._get_uris_from_string_template(html, context, graph_start, graph_end)
