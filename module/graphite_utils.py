@@ -27,6 +27,7 @@ from datetime import datetime
 import re
 import logging
 import urlparse
+import copy
 
 
 # encapsulate graph styles
@@ -135,6 +136,10 @@ class GraphiteTarget(object):
 
         def parse_graphite_part(part):
             logging.debug('Parsing %s', part)
+
+            if part[0:2] == '__' and part[-2:] == '__':
+                return part[2:-2]
+
             ndx = part.find('(')
             if ndx < 0:
                 logging.debug('No function call')
@@ -174,7 +179,7 @@ class GraphiteURL(object):
         if targets is not None:
             for t in targets:
                 self.add_target(t)
-        self.style = style
+        self.style = copy.copy(style)
         for k in ('height', 'width', 'font_size', 'line_style'):
             if k in kwargs:
                 setattr(self.style, k, kwargs[k])

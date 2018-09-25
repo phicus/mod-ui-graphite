@@ -25,6 +25,7 @@ import logging
 import os
 from string import Template
 import json
+import re
 
 from .graphite_utils import GraphiteURL, GraphiteMetric, graphite_time
 
@@ -138,9 +139,17 @@ class GraphFactory(object):
     @property
     def tags(self):
         if self.element_type == 'service':
-            return self.element.host.cpe_registration_tags.split(',') or ['dummy_tag']
+            string_tags = self.element.host.cpe_registration_tags or "dummy_tag:'''dummy_taglabel'''"
         else:
-            return self.element.cpe_registration_tags.split(',') or ['dummy_tag']
+            string_tags = self.element.cpe_registration_tags or "dummy_tag:'''dummy_taglabel'''"
+
+        regex = re.compile(r"(?P<tag>[a-zA-Z0-9-_/\.]+):'''(?P<taglabel>[a-zA-Z0-9 \-_]*)'''($|\s)")
+        print("string_tags", string_tags)
+        self.logger.info("tags...string_tags -> [[%s]]", string_tags)
+        for match in regex.finditer(string_tags):
+            print(" - tags... %s->%s", match.group('tag'), match.group('taglabel'))
+
+        return {match.group('tag'):match.group('taglabel') for match in regex.finditer(string_tags)}
 
     # retrieve a style with graceful fallback
     def get_style(self, name):
@@ -269,16 +278,27 @@ class GraphFactory(object):
 
 
         # Split, we may have several images.
-        logger.info("[ui-graphite] tags elt={}...".format(self.hostname))
-        for tag in self.tags:
-            logger.info("[ui-graphite] tag={}".format(tag))
-            context['tag'] = tag
+        logger.debug("[ui-graphite] tags elt={}...".format(self.hostname))
+        if '{tag}' in template_html: # Dirty hack for untagged templates
+            for tag in self.tags:
+                logger.debug("[ui-graphite] tag={}".format(tag))
+                context['tag'] = tag
+                context['taglabel'] = self.tags[tag]
+                uris += self._get_uris_from_string_template(html, context, graph_start, graph_end)
+        else:
+            uris += self._get_uris_from_string_template(html, context, graph_start, graph_end)
+        return uris
 
-            for img in html.substitute(context).split('\n'):
-                if not img:
-                    continue
-                graph = GraphiteURL.parse(img, style=self.style)
-                uris.append(dict(link=graph.url('composer'), img_src=graph.url('render')))
+    def _get_uris_from_string_template(self, template, context, graph_start, graph_end):
+        uris = []
+        for img in template.substitute(context).split('\n'):
+            if not img:
+                continue
+            # FIXME Temporal fix for no time interval in uri
+            # https://github.com/shinken-monitoring/mod-ui-graphite/issues/16
+            img = img + "&from=" + graph_start + "&until=" + graph_end
+            graph = GraphiteURL.parse(img, style=self.style)
+            uris.append(dict(link=graph.url('composer'), img_src=graph.url('render')))
         return uris
 
 
