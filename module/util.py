@@ -143,11 +143,11 @@ class GraphFactory(object):
         else:
             string_tags = self.element.cpe_registration_tags or "dummy_tag:'''dummy_taglabel'''"
 
-        regex = re.compile(r"(?P<tag>[a-zA-Z0-9-_/\.]+):'''(?P<taglabel>[a-zA-Z0-9 \-_\"+:\.]*)'''($|\s)")
+        regex = re.compile(r"(?P<tag>[a-zA-Z0-9-_/\.\*]+):'''(?P<taglabel>[a-zA-Z0-9 \-_\"+:\.,\*]*)'''($|\s)")
         # print("string_tags", string_tags)
         self.logger.info("tags...string_tags -> [[%s]]", string_tags)
         # for match in regex.finditer(string_tags):
-            # print(" - tags... %s->%s", match.group('tag'), match.group('taglabel'))
+        #     print(" - tags... %s->%s", match.group('tag'), match.group('taglabel'))
 
         return {match.group('tag'):match.group('taglabel') for match in regex.finditer(string_tags)}
 
@@ -220,7 +220,7 @@ class GraphFactory(object):
                 link=graph.url('composer'),
                 img_src=graph.url('render')
             )
-            self.logger.debug("[Graphite UI] uri: %s / %s", v['link'], v['img_src'])
+            self.logger.info("[Graphite UI] uri: %s / %s", v['link'], v['img_src'])
             uris.append(v)
 
         return uris
