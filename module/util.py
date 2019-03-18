@@ -143,7 +143,7 @@ class GraphFactory(object):
         else:
             string_tags = self.element.cpe_registration_tags or "dummy_tag:'''dummy_taglabel'''"
 
-        regex = re.compile(r"(?P<tag>[a-zA-Z0-9-_/\.\*]+):'''(?P<taglabel>[a-zA-Z0-9 \-_\"+:\.,\*]*)'''($|\s)")
+        regex = re.compile(r"(?P<tag>[a-zA-Z0-9-_/\.\*]+):'''(?P<taglabel>[a-zA-Z0-9 \-_\"+:\.,\*\/]*)'''($|\s)")
         # print("string_tags", string_tags)
         self.logger.info("tags...string_tags -> [[%s]]", string_tags)
         # for match in regex.finditer(string_tags):
