@@ -29,20 +29,32 @@ This class is for linking the WebUI with Graphite,
 for mainly get graphs and links.
 """
 
+import os
 import re
 import socket
 import time
 
+ALIGNAK = False
+if os.environ.get('ALIGNAK_SHINKEN_UI', None):
+    if os.environ.get('ALIGNAK_SHINKEN_UI') not in ['0']:
+        ALIGNAK = True
+
 from .graphite_utils import GraphStyle, GraphiteMetric
 from .util import GraphFactory
 from shinken.log import logger
-from shinken.basemodule import BaseModule
+
+if ALIGNAK:
+    from alignak.basemodule import BaseModule
+else:
+    from shinken.basemodule import BaseModule
+
 from shinken.misc.perfdata import PerfDatas
 
 
 properties = {
     'daemons': ['webui'],
-    'type': 'graphite_webui'
+    'type': 'graphite_webui',
+    'external': False
 }
 
 
@@ -59,6 +71,10 @@ class Graphite_Webui(BaseModule):
         BaseModule.__init__(self, modconf)
         self._uri = ''
         self.app = None
+
+        if ALIGNAK:
+            self.module_type = getattr(modconf, 'module_type', 'unset')
+            self.module_name = getattr(modconf, 'module_name', 'unset')
 
         # service name to use for host check
         self.hostcheck = getattr(modconf, 'hostcheck', '')
@@ -126,7 +142,8 @@ class Graphite_Webui(BaseModule):
 
     # Try to connect if we got true parameter
     def init(self):
-        pass
+        if ALIGNAK:
+            return True
 
     # To load the webui application
     def load(self, app):
